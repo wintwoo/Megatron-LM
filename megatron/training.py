@@ -649,7 +649,7 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
 
     if iteration % args.log_interval == 0:
         elapsed_time = timers('interval-time').elapsed(barrier=True)
-        elapsed_time_per_iteration = elapsed_time / total_iterations
+        elapsed_time_per_iteration = elapsed_time / total_iterations # in seconds
         throughput = num_floating_point_operations(args, batch_size) / (
             elapsed_time_per_iteration * 10**12 * args.world_size)
         if args.log_timers_to_tensorboard:
@@ -663,8 +663,8 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
             iteration, args.train_iters)
         log_string += ' consumed samples: {:12d} |'.format(
             args.consumed_train_samples)
-        log_string += ' elapsed time per iteration (ms): {:.1f} |'.format(
-            elapsed_time_per_iteration * 1000.0)
+        log_string += ' elapsed time per iteration (s): {:.2f} |'.format(
+            elapsed_time_per_iteration)
         if args.log_throughput:
             log_string += f' throughput per GPU (TFLOP/s/GPU): {throughput:.1f} |'
             if args.log_timers_to_tensorboard:
@@ -693,6 +693,15 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
             total_loss_dict[skipped_iters_key])
         log_string += ' number of nan iterations: {:3d} |'.format(
             total_loss_dict[nan_iters_key])
+
+        samples_per_second = (args.consumed_train_samples - args.last_consumed_train_samples) / (
+            elapsed_time_per_iteration * 1000.0)
+        log_string += ' samples per second: {:3d} |'.format(
+            samples_per_second)
+        flops_per_iteration = elapsed_time_per_iteration * throughput * 10**12 * args.world_size
+        log_string += ' flops per iteration: {} |'.format(
+            flops_per_iteration)
+
         total_loss_dict[advanced_iters_key] = 0
         total_loss_dict[skipped_iters_key] = 0
         total_loss_dict[nan_iters_key] = 0
@@ -790,6 +799,8 @@ def train(forward_step_func, model, optimizer, opt_param_scheduler,
                        opt_param_scheduler,
                        config)
         iteration += 1
+        
+        args.last_consumed_train_samples = args.consumed_train_samples if iteration > 0 else 0
         args.consumed_train_samples += mpu.get_data_parallel_world_size() * \
                                        args.micro_batch_size * \
                                        get_num_microbatches()
