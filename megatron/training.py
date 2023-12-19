@@ -695,11 +695,11 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
             total_loss_dict[nan_iters_key])
 
         samples_per_second = (args.consumed_train_samples - args.last_consumed_train_samples) / (
-            elapsed_time_per_iteration * 1000.0)
+            elapsed_time_per_iteration)
         log_string += ' samples per second: {:.3f} |'.format(
             samples_per_second)
         flops_per_iteration = elapsed_time_per_iteration * throughput * 10**12 * args.world_size
-        log_string += ' flops per iteration: {} |'.format(
+        log_string += ' flops per iteration: {:.3f} |'.format(
             flops_per_iteration)
 
         total_loss_dict[advanced_iters_key] = 0
