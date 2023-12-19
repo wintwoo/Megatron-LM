@@ -696,7 +696,7 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
 
         samples_per_second = (args.consumed_train_samples - args.last_consumed_train_samples) / (
             elapsed_time_per_iteration * 1000.0)
-        log_string += ' samples per second: {:3d} |'.format(
+        log_string += ' samples per second: {:.3f} |'.format(
             samples_per_second)
         flops_per_iteration = elapsed_time_per_iteration * throughput * 10**12 * args.world_size
         log_string += ' flops per iteration: {} |'.format(
